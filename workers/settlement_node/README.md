@@ -1,0 +1,2 @@
+# Settlement Node
+This worker acts as the final ledger writer. It listens to Kafka and safely writes to Postgres. It relies on the `transaction_id` for database level idempotency to prevent double spending.
