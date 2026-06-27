@@ -33,3 +33,19 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+
+  fx_node:
+    build: ./workers/fx_node
+    depends_on:
+      - kafka
+
+  fraud_node:
+    build: ./workers/fraud_node
+    depends_on:
+      - kafka
+
+  settlement_node:
+    build: ./workers/settlement_node
+    depends_on:
+      - postgres
+      - kafka
