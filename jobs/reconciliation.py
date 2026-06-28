@@ -8,7 +8,8 @@ logger = logging.getLogger("ReconciliationEngine")
 
 def run_audit():
     logger.info(f"Starting End-of-Day Ledger Audit for {datetime.now().date()}")
-    conn = psycopg2.connect("dbname=axiom_tx user=postgres password=secret host=postgres")
+    # change host=postgres to host=localhost
+    conn = psycopg2.connect("dbname=axiom_tx user=postgres password=secret host=localhost")
     cursor = conn.cursor()
 
     try:

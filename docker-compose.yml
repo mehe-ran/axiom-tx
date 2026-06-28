@@ -9,6 +9,9 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-axiom_tx}
     ports:
       - "5432:5432"
+    volumes:
+      # map local file into the container's startup directory
+      - ./infra/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
 
   redis:
     image: redis:7-alpine
@@ -33,19 +36,23 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
 
   fx_node:
     build: ./workers/fx_node
     depends_on:
       - kafka
+    restart: always
 
   fraud_node:
     build: ./workers/fraud_node
     depends_on:
       - kafka
+    restart: always
 
   settlement_node:
     build: ./workers/settlement_node
     depends_on:
       - postgres
       - kafka
+    restart: always
