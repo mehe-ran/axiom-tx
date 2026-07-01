@@ -10,7 +10,6 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      # map local file into the container's startup directory
       - ./infra/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
 
   redis:
@@ -55,4 +54,14 @@ services:
     depends_on:
       - postgres
       - kafka
+    restart: always
+
+  gateway:
+    build: ./gateway
+    ports:
+      - "8000:8000"
+    depends_on:
+      - kafka
+    environment:
+      - KAFKA_BROKER_URL=kafka:9092
     restart: always
