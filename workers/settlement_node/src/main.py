@@ -2,22 +2,37 @@ import psycopg2
 import logging
 import json
 import time
-from confluent_kafka import Consumer, KafkaError
+from confluent_kafka import Consumer, Producer, KafkaError
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# create a persistent database connection with a retry loop for safe startup
+dlq_producer = Producer({'bootstrap.servers': 'kafka:9092'})
+
+def route_to_dlq(transaction_data, error_reason):
+    try:
+        payload = {
+            "original_data": transaction_data,
+            "error": str(error_reason)
+        }
+        dlq_producer.produce(
+            'tx_dead_letter',
+            value=json.dumps(payload).encode('utf-8')
+        )
+        dlq_producer.flush()
+        logger.warning("Routed failed transaction to DLQ.")
+    except Exception as e:
+        logger.error(f"DLQ Routing failed: {e}")
+
 def get_db_connection():
     while True:
         try:
             conn = psycopg2.connect("dbname=axiom_tx user=postgres password=secret host=postgres")
-            logger.info("connected to postgres successfully.")
+            logger.info("Connected to postgres successfully.")
             return conn
         except psycopg2.OperationalError:
-            logger.warning("database not ready. retrying in 2 seconds...")
+            logger.warning("Database not ready. Retrying in 2 seconds...")
             time.sleep(2)
-
 
 def settle_transaction(conn, data):
     cursor = None
@@ -39,9 +54,7 @@ def settle_transaction(conn, data):
         if cursor:
             cursor.close()
 
-
 def main():
-    # connect to the internal docker kafka broker
     conf = {
         'bootstrap.servers': 'kafka:9092',
         'group.id': 'settlement-group',
@@ -49,18 +62,14 @@ def main():
     }
 
     consumer = Consumer(conf)
-
-    # updated topic to match the gateway and fx_node
     consumer.subscribe(['tx_pending'])
 
     logger.info("Settlement Node started. Listening for events...")
 
-    # initialize the persistent connection before entering the consumer loop
     conn = get_db_connection()
 
     try:
         while True:
-            # poll for new messages
             msg = consumer.poll(timeout=1.0)
 
             if msg is None:
@@ -72,12 +81,13 @@ def main():
                     logger.error(f"Kafka Error: {msg.error()}")
                     break
 
-            # parse the kafka event and pass it to postgres using the open connection
             try:
                 data = json.loads(msg.value().decode('utf-8'))
                 settle_transaction(conn, data)
             except Exception as e:
                 logger.error(f"Failed to process message: {e}")
+                raw_data = msg.value().decode('utf-8') if msg.value() else None
+                route_to_dlq(raw_data, e)
 
     except KeyboardInterrupt:
         logger.info("Shutting down gracefully...")
@@ -85,7 +95,6 @@ def main():
         consumer.close()
         if conn:
             conn.close()
-
 
 if __name__ == "__main__":
     main()
