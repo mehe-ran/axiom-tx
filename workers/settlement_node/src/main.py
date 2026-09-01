@@ -1,3 +1,4 @@
+import os
 import psycopg2
 import logging
 import json
@@ -25,9 +26,15 @@ def route_to_dlq(transaction_data, error_reason):
         logger.error(f"DLQ Routing failed: {e}")
 
 def get_db_connection():
+    dsn = (
+        f"dbname={os.getenv('POSTGRES_DB', 'axiom_tx')} "
+        f"user={os.getenv('POSTGRES_USER', 'postgres')} "
+        f"password={os.getenv('POSTGRES_PASSWORD', 'secret')} "
+        f"host={os.getenv('POSTGRES_HOST', 'postgres')}"
+    )
     while True:
         try:
-            conn = psycopg2.connect("dbname=axiom_tx user=postgres password=secret host=postgres")
+            conn = psycopg2.connect(dsn)
             logger.info("Connected to postgres successfully.")
             return conn
         except psycopg2.OperationalError:

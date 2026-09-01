@@ -1,3 +1,4 @@
+import os
 import psycopg2
 import logging
 from datetime import datetime
@@ -8,8 +9,14 @@ logger = logging.getLogger("ReconciliationEngine")
 
 def run_audit():
     logger.info(f"Starting End-of-Day Ledger Audit for {datetime.now().date()}")
-    # change host=postgres to host=localhost
-    conn = psycopg2.connect("dbname=axiom_tx user=postgres password=secret host=localhost")
+    # runs outside the docker network, so the postgres host defaults to localhost
+    dsn = (
+        f"dbname={os.getenv('POSTGRES_DB', 'axiom_tx')} "
+        f"user={os.getenv('POSTGRES_USER', 'postgres')} "
+        f"password={os.getenv('POSTGRES_PASSWORD', 'secret')} "
+        f"host={os.getenv('POSTGRES_HOST', 'localhost')}"
+    )
+    conn = psycopg2.connect(dsn)
     cursor = conn.cursor()
 
     try:
