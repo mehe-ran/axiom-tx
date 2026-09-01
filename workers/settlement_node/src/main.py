@@ -4,6 +4,7 @@ import logging
 import json
 import time
 from confluent_kafka import Consumer, Producer, KafkaError
+from shared.schemas import TransactionEvent
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -41,22 +42,22 @@ def get_db_connection():
             logger.warning("Database not ready. Retrying in 2 seconds...")
             time.sleep(2)
 
-def settle_transaction(conn, data):
+def settle_transaction(conn, event: TransactionEvent):
     cursor = None
     try:
         cursor = conn.cursor()
         cursor.execute(
             "INSERT INTO transactions (transaction_id, sender_id, receiver_id, amount) VALUES (%s, %s, %s, %s)",
-            (data['transaction_id'], data['sender_id'], data['receiver_id'], data['amount'])
+            (event.transaction_id, event.sender_id, event.receiver_id, event.amount)
         )
         conn.commit()
-        logger.info(f"Transaction {data['transaction_id']} settled.")
+        logger.info(f"Transaction {event.transaction_id} settled.")
     except psycopg2.errors.UniqueViolation:
         conn.rollback()
-        logger.warning(f"Duplicate transaction {data['transaction_id']} skipped.")
+        logger.warning(f"Duplicate transaction {event.transaction_id} skipped.")
     except psycopg2.errors.ForeignKeyViolation:
         conn.rollback()
-        logger.warning(f"Foreign Key missing for {data['transaction_id']} - check accounts table.")
+        logger.warning(f"Foreign Key missing for {event.transaction_id} - check accounts table.")
     finally:
         if cursor:
             cursor.close()
@@ -89,8 +90,8 @@ def main():
                     break
 
             try:
-                data = json.loads(msg.value().decode('utf-8'))
-                settle_transaction(conn, data)
+                event = TransactionEvent.model_validate_json(msg.value())
+                settle_transaction(conn, event)
             except Exception as e:
                 logger.error(f"Failed to process message: {e}")
                 raw_data = msg.value().decode('utf-8') if msg.value() else None

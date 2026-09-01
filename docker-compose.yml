@@ -37,12 +37,20 @@ services:
     build: ./workers/fx_node
     depends_on:
       - kafka
+    environment:
+      PYTHONPATH: /app
+    volumes:
+      - ./shared:/app/shared:ro
     restart: always
 
   fraud_node:
     build: ./workers/fraud_node
     depends_on:
       - kafka
+    environment:
+      PYTHONPATH: /app
+    volumes:
+      - ./shared:/app/shared:ro
     restart: always
 
   settlement_node:
@@ -55,6 +63,9 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-secret}
       POSTGRES_DB: ${POSTGRES_DB:-axiom_tx}
+      PYTHONPATH: /app
+    volumes:
+      - ./shared:/app/shared:ro
     restart: always
 
   gateway:
@@ -65,4 +76,7 @@ services:
       - kafka
     environment:
       - KAFKA_BROKER_URL=kafka:9092
+      - PYTHONPATH=/app
+    volumes:
+      - ./shared:/app/shared:ro
     restart: always
