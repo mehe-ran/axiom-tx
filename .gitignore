@@ -1,9 +1,17 @@
 # python artifacts
 __pycache__/
 *.py[cod]
+*.pyc
 
 # virtual environments
 venv/
+.venv/
 
 # environment variables
-.env.venv/
+.env
+
+# IDE
+.idea/
+
+# OS
+.DS_Store
