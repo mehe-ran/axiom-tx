@@ -13,11 +13,6 @@ services:
       - ./infra/postgres/init.sql:/docker-entrypoint-initdb.d/01_init.sql
       - ./infra/postgres/02_indexes.sql:/docker-entrypoint-initdb.d/02_indexes.sql
 
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-
   zookeeper:
     image: confluentinc/cp-zookeeper:7.3.0
     environment:
