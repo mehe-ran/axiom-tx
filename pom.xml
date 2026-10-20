@@ -17,6 +17,10 @@
     <packaging>pom</packaging>
     <name>axiom-tx</name>
 
+    <modules>
+        <module>shared</module>
+    </modules>
+
     <properties>
         <java.version>21</java.version>
     </properties>
