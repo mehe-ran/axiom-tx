@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: fx-node
+  kafka:
+    bootstrap-servers: ${KAFKA_BROKER_URL:localhost:29092}
+    consumer:
+      group-id: fx-group
+      # kafka's default, same as the python consumer which never set it
+      auto-offset-reset: latest
