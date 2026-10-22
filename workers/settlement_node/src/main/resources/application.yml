@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: settlement-node
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:postgres}:${POSTGRES_PORT:5432}/${POSTGRES_DB:axiom_tx}
+    username: ${POSTGRES_USER:postgres}
+    password: ${POSTGRES_PASSWORD:secret}
+  kafka:
+    bootstrap-servers: ${KAFKA_BROKER_URL:localhost:29092}
+    consumer:
+      group-id: settlement-group
+      auto-offset-reset: earliest
