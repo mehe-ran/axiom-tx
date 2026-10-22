@@ -21,6 +21,7 @@
         <module>shared</module>
         <module>gateway</module>
         <module>workers/fx_node</module>
+        <module>workers/fraud_node</module>
     </modules>
 
     <properties>
