@@ -10,6 +10,7 @@ services:
     volumes:
       - ./infra/postgres/init.sql:/docker-entrypoint-initdb.d/01_init.sql
       - ./infra/postgres/02_indexes.sql:/docker-entrypoint-initdb.d/02_indexes.sql
+      - ./infra/postgres/03_seed_accounts.sql:/docker-entrypoint-initdb.d/03_seed_accounts.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 2s
