@@ -23,6 +23,7 @@
         <module>workers/fx_node</module>
         <module>workers/fraud_node</module>
         <module>workers/settlement_node</module>
+        <module>jobs/reconciliation</module>
     </modules>
 
     <properties>
