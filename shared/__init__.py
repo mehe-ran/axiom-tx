@@ -1,1 +1,0 @@
-# expose schemas to the rest of the microservices

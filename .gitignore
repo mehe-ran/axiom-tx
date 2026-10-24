@@ -1,20 +1,12 @@
-# python artifacts
-__pycache__/
-*.py[cod]
-*.pyc
-
-# virtual environments
-venv/
-.venv/
+# maven
+target/
 
 # environment variables
 .env
 
 # IDE
 .idea/
+*.iml
 
 # OS
 .DS_Store
-
-# maven
-target/
