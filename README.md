@@ -1,5 +1,7 @@
 # AxiomTx: Distributed Settlement Engine
 
+> This is the original Python version. The current Java 21 / Spring Boot version is on [`main`](../../tree/main).
+
 AxiomTx is an event-driven microservices architecture designed to handle high-throughput financial transactions. It validates, enriches, and settles payments asynchronously using an idempotent ledger.
 
 ## Architecture Highlights
