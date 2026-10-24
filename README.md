@@ -4,6 +4,8 @@ AxiomTx is an event-driven settlement engine. An HTTP gateway validates transfer
 
 Built with Java 21, Spring Boot 3 and Spring for Apache Kafka, as a Maven multi-module project.
 
+> The original Python version (FastAPI, confluent-kafka, psycopg2) lives on the [`python` branch](../../tree/python).
+
 ## Architecture
 
 ```
