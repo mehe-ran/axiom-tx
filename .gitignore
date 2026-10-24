@@ -1,5 +1,9 @@
-# maven
+# java / maven
 target/
+*.class
+
+# python leftovers
+.venv/
 
 # environment variables
 .env
