@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:15-alpine
@@ -12,6 +10,11 @@ services:
     volumes:
       - ./infra/postgres/init.sql:/docker-entrypoint-initdb.d/01_init.sql
       - ./infra/postgres/02_indexes.sql:/docker-entrypoint-initdb.d/02_indexes.sql
+      - ./infra/postgres/03_seed_accounts.sql:/docker-entrypoint-initdb.d/03_seed_accounts.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 2s
+      retries: 30
 
   zookeeper:
     image: confluentinc/cp-zookeeper:7.3.0
@@ -25,58 +28,86 @@ services:
     depends_on:
       - zookeeper
     ports:
-      - "9092:9092"
+      - "29092:29092"
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092 > /dev/null"]
+      interval: 5s
+      retries: 30
+
+  gateway:
+    build:
+      context: .
+      args:
+        MODULE: gateway
+    ports:
+      - "8000:8000"
+    depends_on:
+      kafka:
+        condition: service_healthy
+    environment:
+      KAFKA_BROKER_URL: kafka:9092
+    restart: always
 
   fx_node:
-    build: ./workers/fx_node
+    build:
+      context: .
+      args:
+        MODULE: workers/fx_node
     depends_on:
-      - kafka
+      kafka:
+        condition: service_healthy
     environment:
-      PYTHONPATH: /app
-    volumes:
-      - ./shared:/app/shared:ro
+      KAFKA_BROKER_URL: kafka:9092
     restart: always
 
   fraud_node:
-    build: ./workers/fraud_node
+    build:
+      context: .
+      args:
+        MODULE: workers/fraud_node
     depends_on:
-      - kafka
+      kafka:
+        condition: service_healthy
     environment:
-      PYTHONPATH: /app
-    volumes:
-      - ./shared:/app/shared:ro
+      KAFKA_BROKER_URL: kafka:9092
     restart: always
 
   settlement_node:
-    build: ./workers/settlement_node
+    build:
+      context: .
+      args:
+        MODULE: workers/settlement_node
     depends_on:
-      - postgres
-      - kafka
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      KAFKA_BROKER_URL: kafka:9092
+      POSTGRES_HOST: postgres
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-secret}
+      POSTGRES_DB: ${POSTGRES_DB:-axiom_tx}
+    restart: always
+
+  # one-off job, not started by `up`: docker compose run --rm reconciliation
+  reconciliation:
+    build:
+      context: .
+      args:
+        MODULE: jobs/reconciliation
+    profiles: ["jobs"]
+    depends_on:
+      postgres:
+        condition: service_healthy
     environment:
       POSTGRES_HOST: postgres
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-secret}
       POSTGRES_DB: ${POSTGRES_DB:-axiom_tx}
-      PYTHONPATH: /app
-    volumes:
-      - ./shared:/app/shared:ro
-    restart: always
-
-  gateway:
-    build: ./gateway
-    ports:
-      - "8000:8000"
-    depends_on:
-      - kafka
-    environment:
-      - KAFKA_BROKER_URL=kafka:9092
-      - PYTHONPATH=/app
-    volumes:
-      - ./shared:/app/shared:ro
-    restart: always

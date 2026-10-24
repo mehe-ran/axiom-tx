@@ -1,0 +1,11 @@
+server:
+  port: 8000
+
+spring:
+  application:
+    name: gateway
+  jackson:
+    generator:
+      write-bigdecimal-as-plain: true
+  kafka:
+    bootstrap-servers: ${KAFKA_BROKER_URL:localhost:29092}

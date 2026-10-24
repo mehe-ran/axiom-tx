@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: reconciliation
+  main:
+    banner-mode: off
+  datasource:
+    # runs from the host by default, so postgres is on localhost
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:axiom_tx}
+    username: ${POSTGRES_USER:postgres}
+    password: ${POSTGRES_PASSWORD:secret}

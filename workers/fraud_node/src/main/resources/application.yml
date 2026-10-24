@@ -1,0 +1,8 @@
+spring:
+  application:
+    name: fraud-node
+  kafka:
+    bootstrap-servers: ${KAFKA_BROKER_URL:localhost:29092}
+    consumer:
+      group-id: fraud-group
+      auto-offset-reset: earliest
