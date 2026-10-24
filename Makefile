@@ -1,5 +1,5 @@
 # devops orchestration
-.PHONY: up down restart logs wipe build test reconcile
+.PHONY: up down restart logs wipe build test reconcile seed edge-cases
 
 up:
 	docker compose up -d --build
@@ -25,3 +25,9 @@ test:
 
 reconcile:
 	docker compose run --rm --build reconciliation
+
+seed:
+	java scripts/SeedData.java
+
+edge-cases:
+	java scripts/TestEdgeCases.java
